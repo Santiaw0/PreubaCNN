@@ -1,7 +1,8 @@
 streamlit
 geopandas
-folium
+folium>=0.12
 streamlit-folium
 plotly
 streamlit-option-menu
 mapclassify
+matplotlib
