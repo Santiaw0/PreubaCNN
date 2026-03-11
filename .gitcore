@@ -1,8 +1,1 @@
-# .gitignore
-__pycache__/
-*.pyc
-.env
-*.dbf
-*.shx
-*.prj
-data/
+
