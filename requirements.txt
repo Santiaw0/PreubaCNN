@@ -6,3 +6,7 @@ plotly
 streamlit-option-menu
 mapclassify
 matplotlib
+openpyxl
+seaborn
+scipy
+plotly
