@@ -1,9 +1,9 @@
 import streamlit as st
 from streamlit_option_menu import option_menu
-
-# Importamos nuestras funciones personalizadas
-from src.loaders import load_all_geodata
-from src.components import render_inicio, render_final, render_analisis
+import pandas as pd
+from seccion_seguridad import render_seccion_seguridad
+from src.loaders import load_all_geodata          # ← esta
+from src.components import render_inicio, render_analisis, render_final  # ← esta
 
 
 # 1. CONFIGURACIÓN
@@ -44,4 +44,7 @@ elif selected == "Mapa Localidades":
     render_analisis(localidades, CAIS)
 
 elif selected == "Analisis":
-    render_final(filex)
+    df_raw = pd.read_excel("data/Clima de Negocios 2024/Encuesta Clima de negocios 2024 final anonimizada.xlsx")
+
+    #render_final(filex)
+    render_seccion_seguridad(df_raw)
