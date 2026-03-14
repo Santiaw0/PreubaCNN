@@ -4,9 +4,9 @@ streamlit-folium
 geopandas
 folium>=0.12
 mapclassify
+matplotlib
 plotly
 pandas
 numpy
 openpyxl
 scikit-learn
-mapclassify
