@@ -14,7 +14,7 @@ import folium
 from folium.features import CustomIcon
 
 # ── Icono de CAI en base64 (se convierte una sola vez al importar) ────────────
-with open("data/Imagenes/iconopolicamapa.png", "rb") as f:
+with open("data/Imagenes/markerb.png", "rb") as f:
     _IMG_BASE64 = "data:image/png;base64," + base64.b64encode(f.read()).decode("utf-8")
 
 
@@ -51,7 +51,7 @@ def load_epv() -> pd.DataFrame:
 # ── Marcadores de CAI en el mapa ──────────────────────────────────────────────
 def add_markers(row, m: folium.Map) -> None:
     """Añade un marcador de CAI al mapa Folium recibido."""
-    icon = CustomIcon(_IMG_BASE64, icon_size=(27, 27), icon_anchor=(17, 17))
+    icon = CustomIcon(_IMG_BASE64, icon_size=(27, 27), icon_anchor=(15, 15))
 
     popup_html = f"""
     <div style="font-family:Arial;width:250px;">

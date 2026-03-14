@@ -24,10 +24,10 @@ localidades, CAIS = load_all_geodata()
 
 # ── 3. Sidebar ────────────────────────────────────────────────────────────────
 with st.sidebar:
-    st.image("data/Imagenes/logobar.png", width=150)
+    st.image("data/Imagenes/logoCanipypng.png", width=550)
 
     selected = option_menu(
-        menu_title="Canopy",
+        menu_title="Random Forest",
         options=["Servicio de Ayuda", "Riesgo Local", "Análisis", "BACANO"],
         icons=["house-heart", "map", "graph-up", "stars"],
         default_index=0,
@@ -42,6 +42,8 @@ with st.sidebar:
         "### Tutor \n"
         "atrillerasm@unbosque.edu.co"
     )
+    st.image("data/Imagenes/logobar.png", width=150)
+
 
 # ── 4. Navegación ─────────────────────────────────────────────────────────────
 if selected == "Servicio de Ayuda":

@@ -19,19 +19,18 @@ from src.graficos import (
     kpis_ecn, barras_sector, barras_tamano, barras_delitos_ecn,
     pie_percepcion_ecn, barras_medidas, heatmap_ire,
     # EPV
-    kpis_epv, victimizacion_general, delitos_empresariales_epv,
-    denuncia_por_delito, percepcion_barrio_ciudad,
-    genero_victimizacion, victimizacion_localidad,
+    kpis_epv,  delitos_empresariales_epv, percepcion_barrio_ciudad,
     # Riesgo local
     detalle_localidad,
+percepcion_ciudad, denuncia_y_satisfaccion
 )
 
 # ═════════════════════════════════════════════════════════════════════════════
 # PÁGINA 1 — Servicio de Ayuda
 # ═════════════════════════════════════════════════════════════════════════════
 def render_servicio_ayuda(localidades, CAIS):
-    st.title("🛡️ Servicio de Ayuda")
-    st.subheader("Visualización de CAIs en Bogotá")
+    st.title("Servicio de Ayuda")
+    st.subheader("Visualización de CAI's en Bogotá")
 
     m = localidades.explore(
         location=[4.629, -74.105], zoom_start=11.5,
@@ -52,9 +51,9 @@ def render_servicio_ayuda(localidades, CAIS):
         "víctimas de violencia física, verbal o psicológica, o en riesgo de feminicidio."
     )
     col1, col2 = st.columns(2)
-    col1.metric("📞 Teléfono",  "018000112137")
-    col2.metric("💬 WhatsApp",  "300 755 1846")
-    st.metric("📧 Correo", "lpurpura@sdmujer.gov.co")
+    col1.markdown(" ##### 📞 Teléfono \n ## **018000112137**")
+    col2.markdown(" ##### 💬 WhatsApp \n ## **300 755 1846**")
+    st.markdown("#### 📧 Correo: **lpurpura@sdmujer.gov.co**")
 
 
 # ═════════════════════════════════════════════════════════════════════════════
@@ -139,6 +138,7 @@ def _mapa_riesgo(localidades, tasa_loc: pd.DataFrame, CAIS) -> folium.Map:
         add_markers(row, m)
 
     # Leyenda
+    '''
     m.get_root().html.add_child(folium.Element("""
         <div style="position:fixed;bottom:30px;left:30px;z-index:1000;
                     background:white;padding:10px 14px;border-radius:8px;
@@ -148,6 +148,7 @@ def _mapa_riesgo(localidades, tasa_loc: pd.DataFrame, CAIS) -> folium.Map:
             <span style="color:#F39C12">&#9632;</span> 15–25% — Medio<br>
             <span style="color:#E74C3C">&#9632;</span> &gt;25% — Alto
         </div>"""))
+    '''
     colormap.add_to(m)
     return m
 def render_riesgo_local(localidades, CAIS):
@@ -165,7 +166,7 @@ def render_riesgo_local(localidades, CAIS):
         epv_ok   = False
 
     # Mapa
-    st.caption("🟢 <15%  🟡 15–25%  🔴 >25% de victimización · Haz clic en una localidad.")
+    #st.caption("🟢 <15%  🟡 15–25%  🔴 >25% de victimización · Haz clic en una localidad.")
     m         = _mapa_riesgo(localidades, tasa_loc, CAIS)
     mapa_data = st_folium(
         m,
@@ -223,7 +224,7 @@ def render_riesgo_local(localidades, CAIS):
         cais_loc = CAIS[CAIS["CAIIULOCAL"].apply(lambda x: int(str(x).lstrip("0") or "0")) == loc_cod]
         st.metric("CAIs en la zona", len(cais_loc))
     else:
-        st.info("👆 Haz clic en una localidad para ver el análisis de riesgo.")
+        st.caption("No se ha seleccionado ninguna localidad para an análisis")
 
     # Evaluador de peligrosidad
 
@@ -231,7 +232,7 @@ def render_riesgo_local(localidades, CAIS):
 # PÁGINA 3 — Análisis (tabs ECN + EPV)
 # ═════════════════════════════════════════════════════════════════════════════
 def render_analisis():
-    st.title("📊 Análisis")
+    st.title("Análisis")
     tab1, tab2 = st.tabs(["🏢 Clima de Negocios", "👥 Percepción y Victimización"])
 
     # ── Tab 1: ECN ────────────────────────────────────────────────────────
@@ -244,39 +245,31 @@ def render_analisis():
             if up: df = preparar_ecn(pd.read_excel(up))
             else: st.stop()
 
-        N, N_vic = len(df), int(df["Victima_bin"].sum())
-        st.markdown("### 🛡️ Seguridad Empresarial · ECN 2024")
-        st.markdown(f"**{N:,} empresas** encuestadas · **{N_vic:,}** víctimas "
-                    f"(**{N_vic/N*100:.1f}%**)")
+        st.markdown("### Seguridad Empresarial · ECN 2024")
         st.divider()
 
-        st.markdown("### 📊 Indicadores clave")
+        st.markdown("### Indicadores clave")
         kpis_ecn(df)
         st.divider()
 
-        st.markdown("### 🏭 ¿Quiénes son más afectados?")
+        st.markdown("### ¿Quiénes son más afectados?")
         col_a, col_b = st.columns(2)
         with col_a: barras_sector(df)
         with col_b: barras_tamano(df)
         st.divider()
 
-        st.markdown("### 🔎 Tipos de delito más frecuentes")
+        st.markdown("### Tipos de delito más frecuentes")
         barras_delitos_ecn(df)
         st.divider()
 
-        st.markdown("### 💬 Percepción de seguridad")
+        st.markdown("### Percepción de seguridad")
         pie_percepcion_ecn(df)
         st.divider()
 
-        st.markdown("### 🔐 Medidas de seguridad adoptadas")
+        st.markdown("### Medidas de seguridad adoptadas")
         barras_medidas(df)
         st.divider()
 
-        st.markdown("### ⚠️ Índice de Riesgo Empresarial (IRE)")
-        st.info("**IRE** = victimización (50%) + sub-reporte (30%) + percepción negativa (20%). "
-                "Pasa el cursor sobre cada celda para ver el detalle.", icon="ℹ️")
-        heatmap_ire(df)
-        st.success(f"✅ {N:,} empresas · {N_vic:,} víctimas ({N_vic/N*100:.1f}%)", icon="✅")
 
     # ── Tab 2: EPV ────────────────────────────────────────────────────────
     with tab2:
@@ -292,40 +285,30 @@ def render_analisis():
             else: st.stop()
 
         df_u   = datos["df_uniq"]
-        N, N_vic = len(df_u), int((df_u["P203"]==1).sum())
+        st.markdown("### Percepción y Victimización · EPV 2024")
 
-        st.markdown("### 👥 Percepción y Victimización · EPV 2024")
-        st.markdown(f"**{N:,} personas** encuestadas · **{N_vic:,}** víctimas "
-                    f"(**{N_vic/N*100:.1f}%**)")
         st.divider()
 
-        st.markdown("### 📊 Indicadores clave")
+        st.markdown("### Indicadores clave")
         kpis_epv(df_u, datos["ids_den"])
+        percepcion_ciudad(df_u)
         st.divider()
 
-        st.markdown("### 🔴 Victimización general")
-        victimizacion_general(df_u)
-        st.divider()
 
-        st.markdown("### 🏢 Delitos relevantes para el entorno empresarial")
+        st.markdown("### Delitos relevantes para el entorno empresarial")
         delitos_empresariales_epv(df_raw)
         st.divider()
 
-        st.markdown("### 📋 Tasa de denuncia por delito")
-        denuncia_por_delito(datos["p204_long"], datos["p214_long"])
-        st.divider()
-
-        st.markdown("### 💬 Percepción de seguridad: barrio y ciudad")
+        st.markdown("### Percepción de seguridad: barrio y ciudad")
         percepcion_barrio_ciudad(df_u)
         st.divider()
 
-        st.markdown("### ⚧ Enfoque de género")
-        genero_victimizacion(df_u, datos["p204_long"], datos["ids_den"])
+        st.markdown("### Relación con la Policía")
+        denuncia_y_satisfaccion(df_u)
         st.divider()
 
-        st.markdown("### 🗺️ Victimización por localidad")
-        victimizacion_localidad(df_u)
-        st.success(f"✅ {N:,} encuestados · {N_vic:,} víctimas ({N_vic/N*100:.1f}%)", icon="✅")
+
+
 
 
 # ═════════════════════════════════════════════════════════════════════════════
@@ -335,3 +318,15 @@ def render_bacano():
     st.title("⭐ BACANO")
     st.subheader("Barómetro Analítico de Comportamiento y Amenazas de Negocios & Operaciones")
     st.info("Sección en construcción.")
+
+    st.markdown("### ⚠️ Índice de Riesgo Empresarial (IRE)")
+    st.info("**IRE** = victimización (50%) + sub-reporte (30%) + percepción negativa (20%). "
+            "Pasa el cursor sobre cada celda para ver el detalle.", icon="ℹ️")
+
+    # ── Tab 1: ECN ────────────────────────────────────────────────────────
+
+
+    df = preparar_ecn(load_ecn())
+    N, N_vic = len(df), int(df["Victima_bin"].sum())
+    heatmap_ire(df)
+    st.success(f"✅ {N:,} empresas · {N_vic:,} víctimas ({N_vic / N * 100:.1f}%)", icon="✅")

@@ -4,6 +4,10 @@ primaryColor = "#559C40"
 #backgroundColor = "#0e1117"
 #secondaryBackgroundColor = "#1a1a2e"
 #textColor = "#ffffff"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F0F4F8"
+textColor = "#0D1B2A"
+font = "sans serif"
 
 [theme.sidebar]
 primaryColor = "#B8860B"
