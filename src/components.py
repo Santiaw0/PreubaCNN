@@ -31,6 +31,11 @@ percepcion_ciudad, denuncia_y_satisfaccion,bacano_dashboard
 def render_servicio_ayuda(localidades, CAIS):
     st.title("Servicio de Ayuda")
     st.subheader("Visualización de CAI's en Bogotá")
+    st.markdown("""
+    Encuentra los CAIs más cercanos a tu ubicación y accede a líneas de atención 
+    de emergencia. Usa el mapa para identificar puntos de apoyo policial en cada 
+    localidad de Bogotá.
+    """)
 
     m = localidades.explore(
         location=[4.629, -74.105], zoom_start=11.5,
@@ -153,6 +158,11 @@ def _mapa_riesgo(localidades, tasa_loc: pd.DataFrame, CAIS) -> folium.Map:
     return m
 def render_riesgo_local(localidades, CAIS):
     st.title("📍 Riesgo Local")
+    st.markdown("""
+    Explora el nivel de victimización por localidad según la Encuesta de Percepción 
+    y Victimización 2024. Haz clic en cualquier localidad para ver los delitos más 
+    frecuentes, percepción de inseguridad por género y CAIs disponibles en la zona.
+    """)
 
     # Cargar y procesar EPV
     try:
@@ -224,7 +234,7 @@ def render_riesgo_local(localidades, CAIS):
         cais_loc = CAIS[CAIS["CAIIULOCAL"].apply(lambda x: int(str(x).lstrip("0") or "0")) == loc_cod]
         st.metric("CAIs en la zona", len(cais_loc))
     else:
-        st.caption("No se ha seleccionado ninguna localidad para an análisis")
+        st.caption("No se ha seleccionado ninguna localidad para resumen de análisis")
 
     # Evaluador de peligrosidad
 
@@ -246,6 +256,11 @@ def render_analisis():
             else: st.stop()
 
         st.markdown("### Seguridad Empresarial · ECN 2024")
+        st.markdown("""
+        Resultados de la Encuesta de Clima de Negocios 2024 de la CCB. Analiza la 
+        victimización empresarial por sector y tamaño, los delitos más frecuentes, 
+        las medidas de seguridad adoptadas.
+        """)
         st.divider()
 
         st.markdown("### Indicadores clave")
@@ -286,7 +301,11 @@ def render_analisis():
 
         df_u   = datos["df_uniq"]
         st.markdown("### Percepción y Victimización · EPV 2024")
-
+        st.markdown("""
+        Resultados de la Encuesta de Percepción y Victimización 2024 de la CCB. 
+        Explora cómo perciben la seguridad los bogotanos, qué delitos se reportan más, 
+        quiénes denuncian.
+        """)
         st.divider()
 
         st.markdown("### Indicadores clave")
@@ -336,7 +355,38 @@ def render_bacano():
 # ═════════════════════════════════════════════════════════════════════════════
 def render_bacano():
     st.title("⭐ BACANO")
-    st.caption("Barómetro Analítico de Comportamiento y Amenazas de Negocios y Operaciones · ECN 2024")
+    st.markdown("#### Barómetro Analítico de Comportamiento y Amenazas de Negocios y Operaciones")
+    st.markdown("""
+    ### ¿Qué es el BACANO?
+
+    Es un índice compuesto que mide el **nivel de riesgo empresarial** en Bogotá D.C., 
+    combinando tres dimensiones clave en un solo valor entre 0 y 1.
+
+    ---
+
+    ### ¿Cómo se calcula?
+
+    $$BACANO = 0.5 \\times Victimización + 0.3 \\times (1 - Denuncia) + 0.2 \\times Percepción\\ negativa$$
+
+    | Componente | Peso | ¿Qué mide? |
+    |---|---|---|
+    | 🔴 Victimización | 50% | Si la empresa fue víctima de al menos un delito |
+    | 📋 Sub-denuncia | 30% | Proporción de víctimas que **no** denunciaron |
+    | 💬 Percepción negativa | 20% | Si la empresa siente que la seguridad **empeoró** vs el año anterior |
+
+    ---
+
+    ### ¿Para qué sirve?
+
+    - **Comparar perfiles** — identifica qué combinación de sector y tamaño concentra mayor riesgo
+    - **Priorizar intervenciones** — un BACANO alto indica dónde enfocar políticas de seguridad
+    - **Monitorear en el tiempo** — permite rastrear si las condiciones mejoran o empeoran entre años
+    - **Simular escenarios** — el simulador muestra cuánto bajaría el índice si más empresas denunciaran
+
+    > 💡 Un BACANO cercano a **0** indica entorno seguro. Cercano a **1** indica alto riesgo.  
+    > En la ECN 2024 los valores oscilan entre **0.15 y 0.45** para Bogotá D.C.
+    """)
+
     try:
         from src.preprocesamiento import preparar_ecn
         df = preparar_ecn(load_ecn())

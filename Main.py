@@ -17,7 +17,7 @@ from src.components import (
 )
 
 # ── 1. Configuración ──────────────────────────────────────────────────────────
-st.set_page_config(page_title="CANOPY", page_icon="🌳", layout="wide")
+st.set_page_config(page_title="CANOPI", page_icon="🌳", layout="wide")
 
 # ── 2. Carga de geodatos (una sola vez gracias al caché) ──────────────────────
 localidades, CAIS = load_all_geodata()
@@ -33,7 +33,10 @@ with st.sidebar:
         default_index=0,
         styles={"nav-link-selected": {"background-color": "#559C40"}},
     )
-
+    st.markdown("""
+    **CANOPI** es una plataforma de análisis de seguridad empresarial y ciudadana 
+    para Bogotá D.C.
+    """)
     st.markdown(
         "### Participantes \n"
         "drodriguezpr@unbosque.edu.co \n"

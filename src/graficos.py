@@ -598,8 +598,7 @@ def bacano_dashboard(df: pd.DataFrame):
     tasa_den = (vic_df["P60"] == 1).sum() / len(vic_df) * 100 if len(vic_df) else 0
 
     # ── Encabezado ────────────────────────────────────────────────────────
-    st.markdown("#### Barómetro Analítico de Comportamiento y Amenazas de Negocios y Operaciones")
-    st.caption("BACANO = 0.5 × Victimización + 0.3 × (1 – Denuncia) + 0.2 × Percepción negativa")
+
 
     # ── KPIs rápidos ──────────────────────────────────────────────────────
     c1, c2, c3, c4 = st.columns(4)
