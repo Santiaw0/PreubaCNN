@@ -103,6 +103,10 @@ def preparar_ecn(df_raw: pd.DataFrame) -> pd.DataFrame:
     df = df_raw[[c for c in COLS if c in df_raw.columns]].copy()
     df = df.drop_duplicates(subset="NUMERO", keep="first").reset_index(drop=True)
 
+    # Filtrar solo Bogotá D.C. (REGION=1) — el proyecto trabaja exclusivamente Bogotá
+    if "REGION" in df.columns:
+        df = df[df["REGION"] == 1].copy().reset_index(drop=True)
+
     int_cols = ["F4","F5","REGION","P56","P56_1","P57","P58"]
     del_cols = DEL_COLS_ECN
     med_cols = ["P61A_1","P61A_2","P61A_3","P61A_4","P61A_5","P61A_6","P61A_7","P61A_9"]
@@ -188,6 +192,10 @@ def preparar_epv(df_raw: pd.DataFrame) -> dict:
         "P20311": "P203_1_1", "P4011": "P401_1",
     }
     df = df.rename(columns={k: v for k, v in rename_map.items() if k in df.columns})
+
+    # Filtrar solo Bogotá D.C. (código DANE 11001)
+    if "MUNICIPIO" in df.columns:
+        df = df[df["MUNICIPIO"] == 11001].copy().reset_index(drop=True)
 
     # df_uniq
     id_vars = ["ID","MUNICIPIO","LOCALIDAD","ESTRATO","SEXO","REDAD",

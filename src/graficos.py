@@ -532,3 +532,255 @@ def heatmap_ire(df: pd.DataFrame):
                       xaxis_title="Tamaño", yaxis_title="Sector", height=300)
     st.plotly_chart(fig, use_container_width=True)
 
+
+# ═════════════════════════════════════════════════════════════════════════════
+# BACANO — Barómetro Analítico de Comportamiento y Amenazas de Negocios
+# Paleta "Bogotá Noir" — dark mode
+# ═════════════════════════════════════════════════════════════════════════════
+
+# Paleta Bogotá Noir
+_BG_DARK = "#0A0E1A"
+_BG_PANEL = "#111827"
+_BG_CARD = "#1A2332"
+_RED_HOT = "#FF2D55"
+_ORANGE_W = "#FF6B35"
+_GOLD_N = "#FFD700"
+_TEAL_N = "#00C9B1"
+_BLUE_SOFT = "#4FC3F7"
+_WHITE_N = "#F0F4FF"
+_GREY_MID = "#4A5568"
+_GREY_PALE = "#A0AEC0"
+
+
+def _calcular_bacano(df: pd.DataFrame) -> pd.DataFrame:
+    """Calcula el índice BACANO por perfil Sector × Tamaño. Solo Bogotá D.C. (REGION=1)."""
+    import numpy as np
+    rows = []
+    for sector in ["Industria", "Comercio", "Servicios"]:
+        for tam in ["Microempresa", "Pequeña", "Mediana", "Grande"]:
+            sub = df[(df["Sector"] == sector) & (df["Tamaño"] == tam)]
+            if len(sub) < 5:
+                continue
+            tv = sub["Victima_bin"].mean()
+            td = (sub[sub["Victima_bin"] == 1]["P60"] == 1).mean() if sub["Victima_bin"].sum() > 0 else 0
+            tp = (sub["P57"] == 3).mean()
+            bac = 0.5 * tv + 0.3 * (1 - td) + 0.2 * tp
+            rows.append({
+                "Sector": sector, "Tamaño": tam,
+                "BACANO": round(bac, 4), "N": len(sub),
+                "TV": tv * 100, "TD": td * 100, "TPN": tp * 100,
+                "comp_vic": 0.5 * tv,
+                "comp_den": 0.3 * (1 - td),
+                "comp_perc": 0.2 * tp,
+            })
+    return pd.DataFrame(rows)
+
+
+def bacano_dashboard(df: pd.DataFrame):
+    """
+    Sección BACANO completa: heatmap de perfiles + simulador de política pública.
+    Paleta dark mode "Bogotá Noir".
+    """
+    import numpy as np
+    import plotly.graph_objects as go
+    from plotly.subplots import make_subplots
+
+    bacano_df = _calcular_bacano(df)
+    if bacano_df.empty:
+        st.warning("No hay suficientes datos para calcular el BACANO.")
+        return
+
+    N = len(df)
+    N_vic = int(df["Victima_bin"].sum())
+    tv_m = df["Victima_bin"].mean()
+    tpn_m = df["Percep_Negativa"].mean()
+    vic_df = df[df["Victima_bin"] == 1]
+    tasa_den = (vic_df["P60"] == 1).sum() / len(vic_df) * 100 if len(vic_df) else 0
+
+    # ── Encabezado ────────────────────────────────────────────────────────
+    st.markdown("#### Barómetro Analítico de Comportamiento y Amenazas de Negocios y Operaciones")
+    st.caption("BACANO = 0.5 × Victimización + 0.3 × (1 – Denuncia) + 0.2 × Percepción negativa")
+
+    # ── KPIs rápidos ──────────────────────────────────────────────────────
+    c1, c2, c3, c4 = st.columns(4)
+    DANGER = "#E74C3C"
+    SUCCESS = "#27AE60"
+    WARN = "#F39C12"
+    ACCENT1 = "#1B4F72"
+    for col, val, label, color, icon in [
+        (c1, f"{tv_m * 100:.1f}%", "Victimización promedio", DANGER, "🔴"),
+        (c2, f"{tasa_den:.1f}%", "Tasa de denuncia", WARN, "📋"),
+        (c3, f"{tpn_m * 100:.1f}%", "Percepción negativa", ACCENT1, "💬"),
+        (c4, f"{bacano_df['BACANO'].mean():.3f}", "BACANO promedio", SUCCESS, "📊"),
+    ]:
+        with col:
+            st.markdown(
+                f"""<div style="background:{color};border-radius:10px;padding:18px 12px;
+                               text-align:center;color:white;min-height:100px">
+                      <div style="font-size:26px;font-weight:700">{icon} {val}</div>
+                      <div style="font-size:12px;opacity:.9;margin-top:6px">{label}</div>
+                    </div>""",
+                unsafe_allow_html=True,
+            )
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    col_a, col_b = st.columns([1.1, 1])
+
+    # ── Panel A — Heatmap BACANO por Sector × Tamaño ─────────────────────
+    with col_a:
+        ORDER_S = ["Industria", "Comercio", "Servicios"]
+        ORDER_T = ["Microempresa", "Pequeña", "Mediana", "Grande"]
+
+        pivot = (bacano_df.pivot(index="Sector", columns="Tamaño", values="BACANO")
+                 .reindex(index=ORDER_S, columns=ORDER_T))
+        pivot_n = (bacano_df.pivot(index="Sector", columns="Tamaño", values="N")
+                   .reindex(index=ORDER_S, columns=ORDER_T))
+
+        z = pivot.values.tolist()
+        text = []
+        for i, sec in enumerate(ORDER_S):
+            row_txt = []
+            for j, tam in enumerate(ORDER_T):
+                val = pivot.iloc[i, j] if not np.isnan(pivot.iloc[i, j]) else None
+                n = int(pivot_n.iloc[i, j]) if val and not np.isnan(pivot_n.iloc[i, j]) else 0
+                row_txt.append(f"{val:.3f}<br><span style='font-size:10px'>n={n}</span>" if val else "n/a")
+            text.append(row_txt)
+
+        # Tooltip enriquecido
+        custom = []
+        for sec in ORDER_S:
+            row_c = []
+            for tam in ORDER_T:
+                r = bacano_df[(bacano_df["Sector"] == sec) & (bacano_df["Tamaño"] == tam)]
+                if r.empty:
+                    row_c.append("Sin datos")
+                else:
+                    r = r.iloc[0]
+                    row_c.append(
+                        f"<b>{sec} / {tam}</b><br>"
+                        f"BACANO: {r['BACANO']}<br>"
+                        f"N empresas: {int(r['N'])}<br>"
+                        f"Victimización: {r['TV']:.1f}%<br>"
+                        f"Denuncia: {r['TD']:.1f}%<br>"
+                        f"Percep. neg.: {r['TPN']:.1f}%"
+                    )
+            custom.append(row_c)
+
+        fig_hm = go.Figure(go.Heatmap(
+            z=pivot.values,
+            x=ORDER_T, y=ORDER_S,
+            colorscale=[
+                [0.0, "#EAF7EE"],
+                [0.25, "#A8D5B5"],
+                [0.5, "#4CAF72"],
+                [0.75, "#1E7A45"],
+                [1.0, "#0D3B22"],
+            ],
+            zmin=0.1, zmax=0.6,
+            text=pivot.values.round(3),
+            texttemplate="<b>%{text}</b>",
+            textfont={"size": 16, "color": "white"},
+            customdata=custom,
+            hovertemplate="%{customdata}<extra></extra>",
+            colorbar=dict(
+                title=dict(text="BACANO", font=dict(color=_GREY_PALE)),
+                tickvals=[0.1, 0.25, 0.4, 0.55],
+                ticktext=["0.10 (bajo)", "0.25", "0.40", "0.55 (alto)"],
+                tickfont=dict(color=_GREY_PALE),
+            ),
+        ))
+        fig_hm.update_layout(
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="white",
+            font=dict(color="#0D1B2A", family="Arial"),
+            title=dict(text="BACANO por perfil empresarial", font=dict(color="#0D1B2A", size=14)),
+            xaxis=dict(tickfont=dict(color="#0D1B2A", size=11)),
+            yaxis=dict(tickfont=dict(color="#0D1B2A", size=11)),
+            margin=dict(l=20, r=20, t=50, b=20),
+            height=320,
+        )
+        st.plotly_chart(fig_hm, use_container_width=True)
+
+    # ── Panel B — Simulador de política pública ───────────────────────────
+    with col_b:
+        td_range = np.linspace(tasa_den / 100, 0.95, 200)
+        bac_range = np.array([
+            tv_m * 0.5 + tv_m * (1 - td) * 0.3 + tpn_m * 0.2
+            for td in td_range
+        ])
+
+        bac_actual = bac_range[0]
+        td_80 = 0.80
+        bac_80 = tv_m * 0.5 + tv_m * (1 - td_80) * 0.3 + tpn_m * 0.2
+        delta = bac_actual - bac_80
+
+        fig_sim = go.Figure()
+
+        # Área rellena
+        fig_sim.add_trace(go.Scatter(
+            x=td_range * 100, y=bac_range,
+            fill="tozeroy", fillcolor="rgba(21,101,192,0.15)",
+            line=dict(color=_BLUE_SOFT, width=2.5),
+            name="BACANO simulado",
+            hovertemplate="TD: %{x:.1f}%<br>BACANO: %{y:.4f}<extra></extra>",
+        ))
+
+        # Punto actual
+        fig_sim.add_trace(go.Scatter(
+            x=[tasa_den], y=[bac_actual],
+            mode="markers+text",
+            marker=dict(size=14, color=_RED_HOT, line=dict(color=_BG_DARK, width=2)),
+            text=[f"HOY {tasa_den:.1f}%"],
+            textposition="top right",
+            textfont=dict(color=_RED_HOT, size=10),
+            name="Situación actual",
+            hovertemplate=f"TD actual: {tasa_den:.1f}%<br>BACANO: {bac_actual:.4f}<extra></extra>",
+        ))
+
+        # Punto meta 80%
+        fig_sim.add_trace(go.Scatter(
+            x=[80], y=[bac_80],
+            mode="markers+text",
+            marker=dict(size=14, color=_TEAL_N, line=dict(color=_BG_DARK, width=2)),
+            text=["META 80%"],
+            textposition="top right",
+            textfont=dict(color=_TEAL_N, size=10),
+            name="Meta denuncia 80%",
+            hovertemplate=f"TD meta: 80%<br>BACANO: {bac_80:.4f}<extra></extra>",
+        ))
+
+        # Líneas guía
+        fig_sim.add_vline(x=tasa_den, line_dash="dot", line_color=_RED_HOT, opacity=0.4)
+        fig_sim.add_vline(x=80, line_dash="dot", line_color=_TEAL_N, opacity=0.4)
+
+        y_min = max(0, bac_range.min() * 0.92)
+        y_max = bac_range.max() * 1.08
+        fig_sim.update_layout(
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="white",
+            font=dict(color="#0D1B2A", family="Arial"),
+            title=dict(
+                text=f"Simulador: elevar denuncia al 80% reduce BACANO en −{delta:.4f} pts",
+                font=dict(color="#0D1B2A", size=13),
+            ),
+            xaxis=dict(title="Tasa de denuncia hipotética (%)",
+                       gridcolor="#CCCCCC", gridwidth=0.5),
+            yaxis=dict(title="BACANO promedio resultante",
+                       gridcolor="#CCCCCC", gridwidth=0.5,
+                       range=[y_min, y_max]),
+            legend=dict(bgcolor="white", bordercolor="#CCCCCC", borderwidth=1),
+            margin=dict(l=20, r=20, t=55, b=40),
+            height=320,
+        )
+        st.plotly_chart(fig_sim, use_container_width=True)
+
+    # ── Insight final ─────────────────────────────────────────────────────
+    top1 = bacano_df.nlargest(1, "BACANO").iloc[0]
+    st.info(
+        f"⚠️ **Perfil de mayor riesgo:** {top1['Sector']} / {top1['Tamaño']} — "
+        f"BACANO = **{top1['BACANO']}** (n = {int(top1['N'])} empresas).  \n"
+        f"Elevar la tasa de denuncia al 80% reduciría el BACANO en **−{delta:.4f} puntos**, "
+        f"más que eliminar toda la percepción negativa.",
+        icon="⚠️",
+    )

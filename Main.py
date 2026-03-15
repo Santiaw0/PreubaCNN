@@ -42,7 +42,7 @@ with st.sidebar:
         "### Tutor \n"
         "atrillerasm@unbosque.edu.co"
     )
-    st.image("data/Imagenes/logobar.png", width=150)
+    st.image("data/Imagenes/logorandom.png", width=220)
 
 
 # ── 4. Navegación ─────────────────────────────────────────────────────────────

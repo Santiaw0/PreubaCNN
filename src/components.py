@@ -22,7 +22,7 @@ from src.graficos import (
     kpis_epv,  delitos_empresariales_epv, percepcion_barrio_ciudad,
     # Riesgo local
     detalle_localidad,
-percepcion_ciudad, denuncia_y_satisfaccion
+percepcion_ciudad, denuncia_y_satisfaccion,bacano_dashboard
 )
 
 # ═════════════════════════════════════════════════════════════════════════════
@@ -330,3 +330,21 @@ def render_bacano():
     N, N_vic = len(df), int(df["Victima_bin"].sum())
     heatmap_ire(df)
     st.success(f"✅ {N:,} empresas · {N_vic:,} víctimas ({N_vic / N * 100:.1f}%)", icon="✅")
+
+# ═════════════════════════════════════════════════════════════════════════════
+# PÁGINA 4 — BACANO (placeholder)
+# ═════════════════════════════════════════════════════════════════════════════
+def render_bacano():
+    st.title("⭐ BACANO")
+    st.caption("Barómetro Analítico de Comportamiento y Amenazas de Negocios y Operaciones · ECN 2024")
+    try:
+        from src.preprocesamiento import preparar_ecn
+        df = preparar_ecn(load_ecn())
+        bacano_dashboard(df)
+    except FileNotFoundError:
+        st.error("No se encontró el archivo ECN 2024.")
+        up = st.file_uploader("Sube el Excel ECN 2024", type=["xlsx"], key="up_bacano")
+        if up:
+            from src.preprocesamiento import preparar_ecn
+            import pandas as pd
+            bacano_dashboard(preparar_ecn(pd.read_excel(up)))
