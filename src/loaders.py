@@ -41,12 +41,17 @@ def load_ecn() -> pd.DataFrame:
 
 
 @st.cache_data(show_spinner=False)
+def load_siedcore() -> pd.DataFrame:
+    """Carga SIEDCORE."""
+    return pd.read_csv(
+        "data/SICORE/SIEDCO(in).csv", sep = ";")
+
+@st.cache_data(show_spinner=False)
 def load_epv() -> pd.DataFrame:
     """Carga la Encuesta de Percepción y Victimización 2024."""
     return pd.read_excel(
         "data/Percepcion y Victimizacion 2024/Base2024.xlsx"
     )
-
 
 # ── Marcadores de CAI en el mapa ──────────────────────────────────────────────
 def add_markers(row, m: folium.Map) -> None:
@@ -75,3 +80,4 @@ def add_markers(row, m: folium.Map) -> None:
         popup=folium.Popup(popup_html, max_width=280),
         tooltip=f"🛡️ CAI {row['CAINOMBRE']}",
     ).add_to(m)
+

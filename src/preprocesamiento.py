@@ -241,3 +241,41 @@ def preparar_epv(df_raw: pd.DataFrame) -> dict:
         "tasa_loc":  tasa_loc,
         "ids_den":   set(p214_long["ID"].unique()),
     }
+
+
+# ═════════════════════════════════════════════════════════════════════════════
+# SIEDCORE — Sistema de Información de Estadísticas Delictivas
+# ═════════════════════════════════════════════════════════════════════════════
+
+@st.cache_data(show_spinner=False)
+def preparar_siedcore(df_raw: pd.DataFrame) -> pd.DataFrame:
+    """
+    Limpia el DataFrame crudo de SIEDCORE.
+    Devuelve un DataFrame listo para graficar.
+    """
+    df = df_raw.copy()
+
+    # Limpiar nombres de columnas
+    df.columns = df.columns.str.strip()
+
+    # Eliminar filas sin datos útiles
+    df = df.dropna(subset=["HECHO", "LOCALIDAD", "CANTIDAD"]).copy()
+
+    # Normalizar texto
+    for col in ["SEXO", "HECHO", "LOCALIDAD", "ARMA_EMPLEADA", "RANGO_VITAL", "RANGO_DEL_DIA"]:
+        if col in df.columns:
+            df[col] = df[col].astype(str).str.strip().str.upper()
+
+    # Excluir filas sin localización
+    df = df[df["LOCALIDAD"] != "SIN LOCALIZACION"].copy()
+
+    # Convertir CANTIDAD a numérico
+    df["CANTIDAD"] = pd.to_numeric(df["CANTIDAD"], errors="coerce").fillna(0).astype(int)
+
+    # Columna de fecha para tendencias
+    df["FECHA"] = pd.to_datetime(
+        df["ANIO"].astype(str) + "-" + df["MES"].astype(str).str.zfill(2) + "-01",
+        errors="coerce"
+    )
+
+    return df.reset_index(drop=True)

@@ -10,11 +10,9 @@ No contiene lógica de limpieza ni imports de Streamlit de navegación.
 
 import streamlit as st
 import pandas as pd
-import numpy as np
 import plotly.graph_objects as go
 import plotly.express as px
 from plotly.subplots import make_subplots
-from streamlit import success
 
 from src.preprocesamiento import (
     LABELS_P204, LABELS_LOCALIDAD, LABELS_SEXO,
@@ -94,12 +92,18 @@ def barras_sector(df: pd.DataFrame):
             colorscale="RdYlGn_r",
             showscale= False
         ),
+
         text=vic["pct"].round(1).astype(str)+"%", textposition="outside",
         hovertemplate="<b>%{y}</b><br>Victimización: %{x:.1f}%<extra></extra>",
     ))
-    fig.update_layout(**BASE, title="Victimización por sector",
+    fig.update_layout(**BASE,
+                      title="Victimización por sector<br><span style='color:gray;font-size:12px'>Promedio Percepción de 1 a 5</span>",
                       xaxis_range=[0, vic["pct"].max()*1.3], showlegend=False, height=280)
     st.plotly_chart(fig, use_container_width=True)
+
+
+
+
 
 
 def barras_tamano(df: pd.DataFrame):
@@ -277,12 +281,18 @@ def delitos_empresariales_epv(df_raw: pd.DataFrame):
     ser   = pd.Series(resultado).sort_values()
     n_vic = int((df_bog["P203"]==1).sum()) if "P203" in df_bog.columns else 1
     pct   = (ser/n_vic*100).round(1)
-    texto = [f"{int(v)}  ({p}%)" for v,p in zip(ser.values,pct.values)]
     colores = px.colors.sample_colorscale("RdYlGn_r",[i/max(len(ser)-1,1) for i in range(len(ser))])
 
+    # porcentaje solo
+    texto = [f"{p}%" for p in pct.values]
+
     fig = go.Figure(go.Bar(
-        x=ser.values, y=ser.index, orientation="h",
-        marker_color=colores, text=texto, textposition="outside",
+        x=ser.values,
+        y=ser.index,
+        orientation="h",
+        marker_color=colores,
+        text=texto,
+        textposition="outside",
         hovertemplate="<b>%{y}</b><br>%{x:,} víctimas<extra></extra>",
     ))
     fig.update_layout(**BASE, title="Delitos relevantes para el entorno empresarial (Bogotá)",
@@ -481,58 +491,6 @@ def percepcion_ciudad(df_uniq: pd.DataFrame):
     st.plotly_chart(fig, use_container_width=True)
 
 
-
-
-########################################
-##  BACANO
-########################################
-
-def heatmap_ire(df: pd.DataFrame):
-    rows = []
-    for sector in ["Industria","Comercio","Servicios"]:
-        for tam in ["Microempresa","Pequeña","Mediana","Grande"]:
-            sub = df[(df["Sector"]==sector) & (df["Tamaño"]==tam)]
-            if len(sub) < 5: continue
-            tv  = sub["Victima_bin"].mean()
-            td  = (sub[sub["Victima_bin"]==1]["P60"]==1).mean() if sub["Victima_bin"].sum()>0 else 0
-            tp  = (sub["P57"]==3).mean()
-            ire = 0.5*tv + 0.3*(1-td) + 0.2*tp
-            rows.append({"Sector":sector,"Tamaño":tam,"IRE":round(ire,3),
-                         "N":len(sub),"Victimización":f"{tv*100:.1f}%",
-                         "Denuncia":f"{td*100:.1f}%","Percep.neg.":f"{tp*100:.1f}%"})
-
-    ire_df  = pd.DataFrame(rows)
-    ORDER_T = [c for c in ["Microempresa","Pequeña","Mediana","Grande"] if c in ire_df["Tamaño"].values]
-    ORDER_S = [s for s in ["Industria","Comercio","Servicios"]          if s in ire_df["Sector"].values]
-    pivot   = ire_df.pivot(index="Sector", columns="Tamaño", values="IRE").reindex(index=ORDER_S, columns=ORDER_T)
-
-    custom = []
-    for sector in ORDER_S:
-        row = []
-        for tam in ORDER_T:
-            r = ire_df[(ire_df["Sector"]==sector)&(ire_df["Tamaño"]==tam)]
-            row.append("Sin datos" if r.empty else
-                       f"<b>{sector}/{tam}</b><br>IRE:{r.iloc[0]['IRE']}<br>"
-                       f"N:{int(r.iloc[0]['N'])}<br>Vic:{r.iloc[0]['Victimización']}<br>"
-                       f"Den:{r.iloc[0]['Denuncia']}<br>Perc.neg:{r.iloc[0]['Percep.neg.']}")
-        custom.append(row)
-
-    fig = go.Figure(go.Heatmap(
-        z=pivot.values, x=ORDER_T, y=ORDER_S,
-        colorscale=[[0,"#1A5276"],[.5,"#F39C12"],[1,"#C0392B"]],
-        zmin=.25, zmax=.70,
-        text=pivot.values.round(3), texttemplate="%{text}",
-        textfont={"size":14,"color":"white"},
-        customdata=custom,
-        hovertemplate="%{customdata}<extra></extra>",
-        colorbar=dict(title="IRE", tickvals=[.25,.40,.55,.70],
-                      ticktext=["0.25 (bajo)","0.40","0.55","0.70 (alto)"]),
-    ))
-    fig.update_layout(**BASE, title="Índice de Riesgo Empresarial (IRE)",
-                      xaxis_title="Tamaño", yaxis_title="Sector", height=300)
-    st.plotly_chart(fig, use_container_width=True)
-
-
 # ═════════════════════════════════════════════════════════════════════════════
 # BACANO — Barómetro Analítico de Comportamiento y Amenazas de Negocios
 # Paleta "Bogotá Noir" — dark mode
@@ -590,8 +548,6 @@ def bacano_dashboard(df: pd.DataFrame):
         st.warning("No hay suficientes datos para calcular el BACANO.")
         return
 
-    N = len(df)
-    N_vic = int(df["Victima_bin"].sum())
     tv_m = df["Victima_bin"].mean()
     tpn_m = df["Percep_Negativa"].mean()
     vic_df = df[df["Victima_bin"] == 1]
@@ -602,10 +558,6 @@ def bacano_dashboard(df: pd.DataFrame):
 
     # ── KPIs rápidos ──────────────────────────────────────────────────────
     c1, c2, c3, c4 = st.columns(4)
-    DANGER = "#E74C3C"
-    SUCCESS = "#27AE60"
-    WARN = "#F39C12"
-    ACCENT1 = "#1B4F72"
     for col, val, label, color, icon in [
         (c1, f"{tv_m * 100:.1f}%", "Victimización promedio", DANGER, "🔴"),
         (c2, f"{tasa_den:.1f}%", "Tasa de denuncia", WARN, "📋"),
@@ -783,3 +735,167 @@ def bacano_dashboard(df: pd.DataFrame):
         f"más que eliminar toda la percepción negativa.",
         icon="⚠️",
     )
+
+# ═════════════════════════════════════════════════════════════════════════════
+# GRÁFICOS SIEDCORE
+# ═════════════════════════════════════════════════════════════════════════════
+# Pega esto al FINAL de graficos.py
+
+def kpis_siedcore(df: pd.DataFrame):
+    """4 KPIs: total hechos, localidad más afectada, hecho más frecuente, rango del día."""
+    total       = int(df["CANTIDAD"].sum())
+    loc_top     = df.groupby("LOCALIDAD")["CANTIDAD"].sum().idxmax()
+    hecho_top   = df.groupby("HECHO")["CANTIDAD"].sum().idxmax()
+    rango_top   = df.groupby("RANGO_DEL_DIA")["CANTIDAD"].sum().idxmax()
+
+    col1, col2, col3, col4 = st.columns(4)
+    for col, val, label, color, icon in [
+        (col1, f"{total:,}",   "Total delitos registrados",   DANGER,  "🚨"),
+        (col2, loc_top.title(), "Localidad más afectada",      ACCENT1, "📍"),
+        (col3, hecho_top.title()[:25], "Delito más frecuente", WARN,    "🔍"),
+        (col4, rango_top.title(), "Momento del día más riesgoso", NEUTRAL, "🕐"),
+    ]:
+        with col:
+            st.markdown(
+                f"""<div style="background:{color};border-radius:10px;padding:18px 12px;
+                               text-align:center;color:white;min-height:100px">
+                      <div style="font-size:22px;font-weight:700">{icon} {val}</div>
+                      <div style="font-size:12px;opacity:.9;margin-top:6px">{label}</div>
+                    </div>""",
+                unsafe_allow_html=True,
+            )
+
+
+def barras_hechos_siedcore(df: pd.DataFrame):
+    """Top 10 delitos por cantidad."""
+    top = (df.groupby("HECHO")["CANTIDAD"].sum()
+             .sort_values(ascending=True).tail(10).reset_index())
+    top["HECHO"] = top["HECHO"].str.title()
+
+    colores = px.colors.sample_colorscale(
+        "RdYlGn_r", [i / max(len(top) - 1, 1) for i in range(len(top))]
+    )
+    fig = go.Figure(go.Bar(
+        x=top["CANTIDAD"], y=top["HECHO"], orientation="h",
+        marker_color=colores,
+        text=top["CANTIDAD"].apply(lambda x: f"{x:,}"), textposition="outside",
+        hovertemplate="<b>%{y}</b><br>Casos: %{x:,}<extra></extra>",
+    ))
+    fig.update_layout(**BASE, title="Top 10 delitos más frecuentes",
+                      xaxis_range=[0, top["CANTIDAD"].max() * 1.3],
+                      showlegend=False, height=380)
+    st.plotly_chart(fig, use_container_width=True)
+
+
+def barras_localidad_siedcore(df: pd.DataFrame):
+    """Delitos por localidad."""
+    loc = (df.groupby("LOCALIDAD")["CANTIDAD"].sum()
+             .sort_values(ascending=True).reset_index())
+    loc["LOCALIDAD"] = loc["LOCALIDAD"].str.title()
+
+    fig = go.Figure(go.Bar(
+        x=loc["CANTIDAD"], y=loc["LOCALIDAD"], orientation="h",
+        marker=dict(color=loc["CANTIDAD"], colorscale="Blues", showscale=False),
+        text=loc["CANTIDAD"].apply(lambda x: f"{x:,}"), textposition="outside",
+        hovertemplate="<b>%{y}</b><br>Casos: %{x:,}<extra></extra>",
+    ))
+    fig.update_layout(**BASE, title="Delitos por localidad",
+                      xaxis_range=[0, loc["CANTIDAD"].max() * 1.3],
+                      showlegend=False, height=500)
+    st.plotly_chart(fig, use_container_width=True)
+
+
+def linea_tendencia_siedcore(df: pd.DataFrame):
+    """Tendencia mensual de delitos."""
+    tend = (df.groupby("FECHA")["CANTIDAD"].sum().reset_index()
+              .sort_values("FECHA"))
+
+    fig = go.Figure(go.Scatter(
+        x=tend["FECHA"], y=tend["CANTIDAD"],
+        mode="lines+markers",
+        line=dict(color=ACCENT2, width=2.5),
+        marker=dict(size=6, color=ACCENT1),
+        fill="tozeroy", fillcolor="rgba(46,134,171,0.1)",
+        hovertemplate="<b>%{x|%b %Y}</b><br>Casos: %{y:,}<extra></extra>",
+    ))
+    fig.update_layout(**BASE, title="Tendencia mensual de delitos",
+                      xaxis_title="Mes", yaxis_title="Cantidad",
+                      height=300)
+    st.plotly_chart(fig, use_container_width=True)
+
+
+def barras_sexo_siedcore(df: pd.DataFrame):
+    """Delitos por sexo."""
+    sexo = df.groupby("SEXO")["CANTIDAD"].sum().reset_index()
+    sexo["SEXO"] = sexo["SEXO"].str.title()
+    colores_sexo = {"Masculino": HOMBRE, "Femenino": MUJER}
+
+    fig = go.Figure(go.Bar(
+        x=sexo["SEXO"], y=sexo["CANTIDAD"],
+        marker_color=sexo["SEXO"].map(colores_sexo).fillna(NEUTRAL),
+        text=sexo["CANTIDAD"].apply(lambda x: f"{x:,}"), textposition="outside",
+        hovertemplate="<b>%{x}</b><br>Casos: %{y:,}<extra></extra>",
+    ))
+    fig.update_layout(**BASE, title="Víctimas por sexo",
+                      yaxis_range=[0, sexo["CANTIDAD"].max() * 1.3],
+                      showlegend=False, height=300)
+    st.plotly_chart(fig, use_container_width=True)
+
+
+def barras_rango_dia_siedcore(df: pd.DataFrame):
+    """Delitos por rango del día."""
+    ORDER = ["MADRUGADA", "MAÑANA", "TARDE", "NOCHE"]
+    rango = (df.groupby("RANGO_DEL_DIA")["CANTIDAD"].sum()
+               .reindex(ORDER).fillna(0).reset_index())
+    rango["RANGO_DEL_DIA"] = rango["RANGO_DEL_DIA"].str.title()
+
+    colores_rango = {
+        "Madrugada": "#1A1A2E", "Mañana": "#F39C12",
+        "Tarde": "#E67E22",     "Noche": "#2C3E50"
+    }
+    fig = go.Figure(go.Bar(
+        x=rango["RANGO_DEL_DIA"], y=rango["CANTIDAD"],
+        marker_color=rango["RANGO_DEL_DIA"].map(colores_rango),
+        text=rango["CANTIDAD"].apply(lambda x: f"{x:,}"), textposition="outside",
+        hovertemplate="<b>%{x}</b><br>Casos: %{y:,}<extra></extra>",
+    ))
+    fig.update_layout(**BASE, title="Delitos por momento del día",
+                      yaxis_range=[0, rango["CANTIDAD"].max() * 1.3],
+                      showlegend=False, height=300)
+    st.plotly_chart(fig, use_container_width=True)
+
+
+def barras_rango_vital_siedcore(df: pd.DataFrame):
+    """Delitos por rango vital (edad)."""
+    rv = (df.groupby("RANGO_VITAL")["CANTIDAD"].sum()
+            .sort_values(ascending=False).reset_index())
+    rv["RANGO_VITAL"] = rv["RANGO_VITAL"].str.title()
+
+    fig = go.Figure(go.Bar(
+        x=rv["RANGO_VITAL"], y=rv["CANTIDAD"],
+        marker=dict(color=rv["CANTIDAD"], colorscale="Purples", showscale=False),
+        text=rv["CANTIDAD"].apply(lambda x: f"{x:,}"), textposition="outside",
+        hovertemplate="<b>%{x}</b><br>Casos: %{y:,}<extra></extra>",
+    ))
+    fig.update_layout(**BASE, title="Víctimas por rango de edad",
+                      yaxis_range=[0, rv["CANTIDAD"].max() * 1.3],
+                      showlegend=False, height=300)
+    st.plotly_chart(fig, use_container_width=True)
+
+
+def barras_arma_siedcore(df: pd.DataFrame):
+    """Top armas empleadas."""
+    arma = (df.groupby("ARMA_EMPLEADA")["CANTIDAD"].sum()
+              .sort_values(ascending=True).tail(8).reset_index())
+    arma["ARMA_EMPLEADA"] = arma["ARMA_EMPLEADA"].str.title()
+
+    fig = go.Figure(go.Bar(
+        x=arma["CANTIDAD"], y=arma["ARMA_EMPLEADA"], orientation="h",
+        marker=dict(color=arma["CANTIDAD"], colorscale="Reds", showscale=False),
+        text=arma["CANTIDAD"].apply(lambda x: f"{x:,}"), textposition="outside",
+        hovertemplate="<b>%{y}</b><br>Casos: %{x:,}<extra></extra>",
+    ))
+    fig.update_layout(**BASE, title="Armas más empleadas",
+                      xaxis_range=[0, arma["CANTIDAD"].max() * 1.3],
+                      showlegend=False, height=350)
+    st.plotly_chart(fig, use_container_width=True)
