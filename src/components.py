@@ -123,7 +123,7 @@ def render_servicio_ayuda(localidades, CAIS):
         """)
         st.caption("Recuerda: Los hospitales tienen la obligación de brindarte atención integral inmediatamente.")
 
-    st.caption("Aactuar de forma prudente y organizada es la mejor manera de proteger lo más importante TU VIDA \:green_heart:.")
+    st.caption("Actuar de forma prudente y organizada es la mejor manera de proteger lo más importante TU VIDA \:green_heart:.")
 
 
 
@@ -369,14 +369,14 @@ def render_riesgo_local(localidades, CAIS):
         st.divider()
 
         if not loc_cod_s:
-            st.caption("Haz clic en una localidad para ver su análisis SIEDCORE.")
+            st.caption("Haz clic en una localidad para ver su análisis SIEDCO.")
             st.stop()
 
         # Filtrar y mostrar gráficos
         df_loc = df_s[df_s["LOCALIDAD"] == loc_nom_s.upper()]
 
         if df_loc.empty:
-            st.warning(f"No hay registros SIEDCORE para **{loc_nom_s}**.")
+            st.warning(f"No hay registros SIEDCO para **{loc_nom_s}**.")
             st.stop()
 
         st.subheader(f"🚨 SIEDCO · {loc_nom_s}")
@@ -558,52 +558,171 @@ def render_analisis():
 # ═════════════════════════════════════════════════════════════════════════════
 # PÁGINA 4 — BACANO (placeholder)
 # ═════════════════════════════════════════════════════════════════════════════
+
+
 def render_bacano():
-    st.title("⭐ BACANO")
-    st.markdown("#### Barómetro Analítico de Comportamiento y Amenazas de Negocios y Operaciones")
-    st.markdown("""
-    ### ¿Qué es el BACANO?
+    st.title("⭐ ¿Qué es el Índice BACANO?")
+    st.markdown("#### El termómetro de la seguridad para tu negocio en Bogotá")
 
-    Es un índice compuesto que mide el **nivel de riesgo empresarial** en Bogotá D.C., 
-    combinando tres dimensiones clave en un solo valor entre 0 y 1.
+    # Introducción amigable
+    st.write("""
+    **BACANO** no es solo un nombre llamativo; son las siglas de nuestro **Barómetro Analítico de Comportamiento 
+    y Amenazas de Negocios y Operaciones**. 
 
-    ---
-
-    ### ¿Cómo se calcula?
-
-    $$BACANO = 0.5 \\times Victimización + 0.3 \\times (1 - Denuncia) + 0.2 \\times Percepción\\ negativa$$
-
-    | Componente | Peso | ¿Qué mide? |
-    |---|---|---|
-    | 🔴 Victimización | 50% | Si la empresa fue víctima de al menos un delito |
-    | 📋 Sub-denuncia | 30% | Proporción de víctimas que **no** denunciaron |
-    | 💬 Percepción negativa | 20% | Si la empresa siente que la seguridad **empeoró** vs el año anterior |
-
-    ---
-
-    ### ¿Para qué sirve?
-
-    - **Comparar perfiles** — identifica qué combinación de sector y tamaño concentra mayor riesgo
-    - **Priorizar intervenciones** — un BACANO alto indica dónde enfocar políticas de seguridad
-    - **Monitorear en el tiempo** — permite rastrear si las condiciones mejoran o empeoran entre años
-    - **Simular escenarios** — el simulador muestra cuánto bajaría el índice si más empresas denunciaran
-
-    > 💡 Un BACANO cercano a **0** indica entorno seguro. Cercano a **1** indica alto riesgo.  
-    > En la ECN 2024 los valores oscilan entre **0.15 y 0.45** para Bogotá D.C.
+    Imagina que es como una 'calificación' de seguridad: nos dice qué tan difícil o seguro es tener un negocio 
+    en Bogotá dependiendo de su tamaño y el sector al que pertenece.
     """)
 
+    # Explicación visual de los 3 pilares
+    st.info("### 🔍 ¿Cómo llegamos a ese número?")
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        st.error("### 50%")
+        st.markdown("**Delitos Reales**")
+        st.caption("¿Cuántos negocios fueron víctimas de robos o ataques?")
+
+    with col2:
+        st.warning("### 30%")
+        st.markdown("**Silencio (No denuncia)**")
+        st.caption("¿Cuántas empresas se quedaron calladas y no avisaron a la policía?")
+
+    with col3:
+        st.success("### 20%")
+        st.markdown("**Miedo Percibido**")
+        st.caption("¿Sienten los dueños que la calle está peor que el año pasado?")
+
+    st.divider()
+
+    # Interpretación del semáforo
+    st.markdown("### 🚦 ¿Cómo leer los resultados?")
+
+    col_a, col_b = st.columns([1, 2])
+
+    with col_a:
+        st.metric("Rango", "0.0 a 1.0")
+
+    with col_b:
+        st.markdown("""
+        * 🟢 **Cerca a 0:** Un entorno tranquilo donde se puede trabajar sin miedo.
+        * 🟡 **Entre 0.15 y 0.45:** La realidad actual de la mayoría de negocios en Bogotá.
+        * 🔴 **Cerca a 1:** Zona de alerta máxima donde se necesita ayuda urgente de las autoridades.
+        """)
+
+    st.divider()
+
+    # Lógica de carga de datos (tu código original)
     try:
         from src.preprocesamiento import preparar_ecn
+        # Asumiendo que load_ecn() existe en tu ambiente
         df = preparar_ecn(load_ecn())
         bacano_dashboard(df)
-    except FileNotFoundError:
-        st.error("No se encontró el archivo ECN 2024.")
-        up = st.file_uploader("Sube el Excel ECN 2024", type=["xlsx"], key="up_bacano")
+    except Exception:
+        st.warning("📊 **Para ver el análisis detallado, necesitamos los datos.**")
+        up = st.file_uploader("Sube el archivo Excel de la ECN 2024", type=["xlsx"], key="up_bacano")
         if up:
-            from src.preprocesamiento import preparar_ecn
             import pandas as pd
-            bacano_dashboard(preparar_ecn(pd.read_excel(up)))
+            from src.preprocesamiento import preparar_ecn
+            df_subido = pd.read_excel(up)
+            st.success("¡Datos cargados con éxito!")
+            bacano_dashboard(preparar_ecn(df_subido))
+def render_simulador_bacano():
+    st.title("🧮 Simulador de Riesgo BACANO Micro")
 
+    with st.form("form_bacano_completo"):
+        # --- Dimensión A ---
+        st.subheader("Dimensión A: Exposición (40%)")
+        p58 = st.radio("1. ¿Su empresa fue víctima de algún delito en 2024?", ["Sí", "No"])
+        n_delitos = st.number_input("2. ¿Cuántos tipos de delito distintos sufrió? (0-9)", 0, 9, 0)
+        alto_impacto = st.radio("3. ¿Sufrió extorsión, ciberdelito, acoso o delito sexual?", ["Sí", "No"])
+
+        # --- Dimensión B ---
+        st.subheader("Dimensión B: Vulnerabilidad (35%)")
+        sin_medidas = st.radio("4. ¿Opera SIN medidas de seguridad reales?", ["Sí", "No"])
+        denuncio = st.selectbox("5. Si fue víctima, ¿denunció el delito?", ["No aplicable", "Sí", "No"])
+        n_impactos = st.number_input("6. ¿Cuántos tipos de impacto económico sufrió? (0-8)", 0, 8, 0)
+
+        # --- Dimensión C ---
+        st.subheader("Dimensión C: Percepción (25%)")
+        empeoro = st.radio("7. ¿Percibe que la seguridad de su entorno empeoró?", ["Sí", "No"])
+        # IMPORTANTE: Asegúrate de que el slider sea flotante o se convierta después
+        escala_seguridad = st.slider("8. ¿Qué tan seguro se siente? (1=Muy inseguro, 5=Muy seguro)", 1, 5, 2)
+        se_siente_seguro = st.radio("9. ¿Se siente seguro en su entorno empresarial?", ["Sí", "No"])
+
+        enviado = st.form_submit_button("Calcular Índice de Riesgo")
+
+    if enviado:
+        # --- DIMENSIÓN A: EXPOSICIÓN (Peso 40%) ---
+        a1 = 1.0 if p58 == "Sí" else 0.0
+        a2 = n_delitos / 9.0
+        a3 = 1.0 if alto_impacto == "Sí" else 0.0
+        dim_a = (0.50 * a1) + (0.30 * a2) + (0.20 * a3)
+
+        # --- DIMENSIÓN B: VULNERABILIDAD (Peso 35%) ---
+        b1 = 1.0 if sin_medidas == "Sí" else 0.0
+        b2 = 1.0 if (p58 == "Sí" and denuncio == "No") else 0.0
+        b3 = n_impactos / 8.0
+        dim_b = (0.40 * b1) + (0.40 * b2) + (0.20 * b3)
+
+        # --- DIMENSIÓN C: PERCEPCIÓN (Peso 25%) ---
+        # 7. Percepción de seguridad (P57)
+        # Si responde "Empeoró" (Sí) -> valor 1
+        val_c1 = 1.0 if empeoro == "Sí" else 0.0
+
+        # 8. Escala de seguridad (P103)
+        # Inversión de escala: (5 - valor) / 4.0
+        # Para el ejemplo (valor 2): (5-2)/4 = 0.75
+        val_c2 = (5.0 - float(escala_seguridad)) / 4.0
+
+        # 9. Sentimiento de seguridad (P104)
+        # Si responde "Inseguro" (No) -> valor 1
+        val_c3 = 1.0 if se_siente_seguro == "No" else 0.0
+
+        # CÁLCULO EXACTO DIMENSIÓN C
+        # Pesos: 50% C1, 30% C2, 20% C3
+        dim_c = (val_c1 * 0.50) + (val_c2 * 0.30) + (val_c3 * 0.20)
+
+        # --- CÁLCULO FINAL DEL ÍNDICE ---
+        # Pesos: 40% A, 35% B, 25% C
+        score = (dim_a * 0.40) + (dim_b * 0.35) + (dim_c * 0.25)
+
+
+        # Renderizado
+        st.metric("Índice BACANO Micro", f"{score:.3f}")
+        # 1. Definir el nivel y el color basado en el score
+        if score > 0.50:
+            nivel = "CRÍTICO / ALTO 🔴"
+            mensaje = "**Nivel Crítico:** La empresa presenta una alta exposición al delito y una percepción de inseguridad severa. Se recomienda intervención inmediata y revisión de medidas de seguridad."
+            color_func = st.error
+        elif score > 0.30:
+            nivel = "MEDIO-ALTO 🟠"
+            mensaje = "**Nivel Medio-Alto:** Existe una vulnerabilidad considerable. Es importante fortalecer la cultura de denuncia y mejorar los sistemas de vigilancia."
+            color_func = st.warning
+        elif score > 0.15:
+            nivel = "MEDIO-BAJO 🟡"
+            mensaje = "**Nivel Medio-Bajo:** El entorno es relativamente estable, pero hay factores de percepción o falta de medidas que podrían mejorar."
+            color_func = st.warning
+        else:
+            nivel = "BAJO 🟢"
+            mensaje = "**Nivel Bajo:** La empresa se encuentra en un entorno seguro y cuenta con una buena gestión de riesgos. ¡Siga así!"
+            color_func = st.success
+
+
+
+        # 3. Mostrar la caja con el color correspondiente y la explicación
+        color_func(mensaje)
+
+        # 4. Visualización de dimensiones
+        st.write("---")
+        st.markdown("### Desglose por Dimensiones")
+        st.progress(dim_a, text=f"Dimensión A (Exposición): {dim_a:.3f}")
+        st.progress(dim_b, text=f"Dimensión B (Vulnerabilidad): {dim_b:.3f}")
+        st.progress(dim_c, text=f"Dimensión C (Percepción): {dim_c:.3f}")
+
+        # Opcional: Globos si el riesgo es muy bajo
+        if score <= 0.15:
+            st.balloons()
 
 
 """
