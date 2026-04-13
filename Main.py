@@ -14,7 +14,8 @@ from src.components import (
     render_riesgo_local,
     render_analisis,
     render_bacano,
-    render_simulador_bacano
+    render_simulador_bacano,
+render_bacano_metodologia
 )
 
 # ── 1. Configuración ──────────────────────────────────────────────────────────
@@ -60,5 +61,5 @@ elif selected == "Análisis":
     render_analisis()
 
 elif selected == "BACANO":
-    render_bacano()
+    render_bacano_metodologia()
     render_simulador_bacano()

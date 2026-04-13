@@ -67,7 +67,8 @@ def render_servicio_ayuda(localidades, CAIS):
         "Hurto",
         "Acoso / Amenazas",
         "Extorsión",
-        "Delito Sexual"]
+        "Delito Sexual",
+    "Ciberseguridad"]
 
     # 2. Selector de delitos
     opcion = st.selectbox(
@@ -122,6 +123,16 @@ def render_servicio_ayuda(localidades, CAIS):
         * **Denuncia:** La denuncia es vital para activar la ruta de protección y justicia.
         """)
         st.caption("Recuerda: Los hospitales tienen la obligación de brindarte atención integral inmediatamente.")
+
+    elif opcion == "Ciberseguridad":
+        st.subheader("Guía de acción para incidentes de Ciberseguridad")
+        st.markdown("""
+        * **Cambia contraseñas:** Desde un dispositivo seguro, cambia las claves de tus correos, bancos y redes sociales.
+        * **Activa el 2FA:** Verifica que la **Autenticación en Dos Pasos** esté activa en todas tus cuentas.
+        * **Notifica:** Informa a tu entidad bancaria si hubo movimiento de dinero y a tus contactos si están enviando spam desde tu cuenta.
+        * **Reporta:** Puedes reportar incidentes de seguridad digital en [caivirtual.policia.gov.co](https://caivirtual.policia.gov.co/).
+        """)
+        st.warning("⚠️ **¡Nunca des clic en enlaces de correos o SMS sospechosos!** Si dudas, bórralo.")
 
     st.caption("Actuar de forma prudente y organizada es la mejor manera de proteger lo más importante TU VIDA \:green_heart:.")
 
@@ -627,6 +638,66 @@ def render_bacano():
             df_subido = pd.read_excel(up)
             st.success("¡Datos cargados con éxito!")
             bacano_dashboard(preparar_ecn(df_subido))
+
+
+def render_bacano_metodologia():
+    st.title("⭐ Barómetro Analítico (BACANO)")
+    st.caption("Barómetro Analítico de Comportamiento y Amenazas de Negocios y Operaciones.")
+    st.markdown("### Sistema de Medición de Riesgo Empresarial - Bogotá D.C.")
+
+    # 1. Explicación Micro vs Macro
+    st.markdown("---")
+    col1, col2 = st.columns(2)
+    with col1:
+        st.subheader("🔹 BACANO Micro")
+        st.write(
+            "Enfoque en la **unidad productiva**. Diagnóstico táctico para que el empresario identifique vulnerabilidades y simule escenarios de mejora (uso de medidas de seguridad, denuncia, etc.).")
+    with col2:
+        st.subheader("🔸 BACANO Macro")
+        st.write(
+            "Enfoque en el **ecosistema urbano**. Inteligencia estratégica que analiza patrones territoriales, sectores económicos y brechas de seguridad para la toma de decisiones públicas.")
+
+    # 2. Tabla Comparativa
+    st.markdown("### 📋 Resumen Metodológico")
+    data_resumen = {
+        "Atributo": ["Nivel", "Enfoque", "Propósito", "Herramienta"],
+        "Micro": ["Empresa individual", "Táctico", "Mitigación y prevención", "Simulador"],
+        "Macro": ["Territorial/Bogotá", "Estratégico", "Política pública", "Dashboard"]
+    }
+    st.table(pd.DataFrame(data_resumen))
+
+    # 3. Estructura de Dimensiones y Pesos
+    st.markdown("### ⚖️ Cálculo del Índice (Pesos Técnicos)")
+    # Tabla de pesos detallada
+    df_pesos = pd.DataFrame({
+        "Dimensión": ["Exposición (A)", "Vulnerabilidad (B)", "Percepción (C)"],
+        "Peso Global": ["40%", "35%", "25%"],
+        "Componentes": ["Víctima, Multiplicidad, Impacto", "Sin medidas, Sub-denuncia, Impacto Eco",
+                        "Empeoramiento, Escala, Sentimiento"],
+        "Variables": ["P58, N_Delitos, Alto_Imp", "Sin_Med, Denuncio, N_Imp", "Empeoró, Escala_Seg, Seg_Ent"]
+    })
+    st.dataframe(df_pesos, use_container_width=True)
+
+    # 4. Explicación de la Escala
+    with st.expander("🔍 Detalle de la Normalización (Fórmulas)"):
+        st.latex(r'''
+        BACANO = (0.40 \times Dim_A) + (0.35 \times Dim_B) + (0.25 \times Dim_C)
+        ''')
+        st.write("""
+        - **Dimensión A:** Normalizada sobre 9 tipos de delito.
+        - **Dimensión B:** Normalizada sobre 8 tipos de impacto económico.
+        - **Dimensión C (Percepción):** Usa una inversión de escala para la seguridad: $ (5 - valor) / 4 $.
+        """)
+        st.info("La escala oscila entre **0 (Entorno Seguro)** y **1 (Alto Riesgo)**.")
+
+    # 5. Interpretación del Riesgo
+    st.markdown("### 🚦 Interpretación de Resultados")
+    data_interpretacion = {
+        "Rango": ["0.00 - 0.15", "0.16 - 0.30", "0.31 - 0.50", "> 0.50"],
+        "Nivel": ["Bajo", "Medio-Bajo", "Medio-Alto", "Crítico/Alto"],
+        "Acción": ["Monitoreo", "Fortalecimiento", "Intervención", "Revisión Urgente"]
+    }
+    st.table(pd.DataFrame(data_interpretacion))
 def render_simulador_bacano():
     st.title("🧮 Simulador de Riesgo BACANO Micro")
 
