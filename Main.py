@@ -19,14 +19,14 @@ render_bacano_metodologia
 )
 
 # ── 1. Configuración ──────────────────────────────────────────────────────────
-st.set_page_config(page_title="CANOPI", page_icon="🌳", layout="wide")
+st.set_page_config(page_title="CANOPY", page_icon="🌳", layout="wide")
 
 # ── 2. Carga de geodatos (una sola vez gracias al caché) ──────────────────────
 localidades, CAIS = load_all_geodata()
 
 # ── 3. Sidebar ────────────────────────────────────────────────────────────────
 with st.sidebar:
-    st.image("data/Imagenes/logoCanipypng.png", width=550)
+    st.image("data/Imagenes/logocanopy.png", width=550)
 
     selected = option_menu(
         menu_title="Random Forest",
@@ -36,7 +36,7 @@ with st.sidebar:
         styles={"nav-link-selected": {"background-color": "#559C40"}},
     )
     st.markdown("""
-    **CANOPI** es una plataforma de análisis de seguridad empresarial y ciudadana 
+    **CANOPY** es una plataforma de análisis de seguridad empresarial y ciudadana 
     para Bogotá D.C.
     """)
     st.markdown(
